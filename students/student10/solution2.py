@@ -86,7 +86,7 @@ def run_experiment():
     lengths = [5, 10, 20, 50, 100]
     num_trials = 30
 
-    print("=== תוצאות ניסוי דיוק שובר הקיסר (30 בדיקות לכל אורך) ===")
+    print("=== Caesar Breaker Accuracy Experiment (30 Trials per Length) ===")
     for l in lengths:
         correct = 0
         for _ in range(num_trials):
@@ -100,13 +100,13 @@ def run_experiment():
                 correct += 1
                 
         acc = (correct / num_trials) * 100
-        print(f"אורך {l:3d} תווים: {acc:.1f}% הצלחה ({correct} הצלחות מתוך {num_trials})")
+        print(f"Length {l:3d} chars: {acc:.1f}% accuracy ({correct}/{num_trials} correct)")
 
 if __name__ == "__main__":
     caesar_cipher = "ZNK ZKGS CUT ZNK SGZIN OT ZNK RGYZ SOTAZK GLZKX G RUTM GTJ JOLLOIARZ YKIUTJ NGRL YZAJKTZY CNU VXGIZOIK G ROZZRK KBKXE JGE AYAGRRE"
     transposition_cipher = "WHHN HN ETRINEMGOSNETRNCHTHHETTTI SSHELIVO LH DHBDKEHEE S HLTT E  GERTDEW EO E ENL OEDOOB UMHRNH RAT RCDWR IWU RLRYFNITYIEFMLOH H E TGETCEDI ITD  N IAK AAETAT"
 
-    print("=== פענוח הודעות עבור student10 ===")
+    print("=== Decryption Results for student10 ===")
     shift, caesar_plain = break_caesar(caesar_cipher)
     print(f"Caesar Shift: {shift} | Plaintext: {caesar_plain}")
 
