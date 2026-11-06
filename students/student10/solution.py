@@ -1,4 +1,5 @@
 from collections import Counter
+import random
 
 ENGLISH_FREQS = {
     'E': 12.02, 'T': 9.10, 'A': 8.12, 'O': 7.68, 'I': 7.31, 'N': 6.95,
@@ -20,6 +21,16 @@ def english_score(text):
         observed_freq = (counts.get(char, 0) / total) * 100
         score += observed_freq * freq
     return score
+
+def encrypt_caesar(text, shift):
+    plain = []
+    for c in text:
+        if c.isalpha():
+            base = ord('A') if c.isupper() else ord('a')
+            plain.append(chr((ord(c) - base + shift) % 26 + base))
+        else:
+            plain.append(c)
+    return "".join(plain)
 
 def decrypt_caesar(ciphertext, shift):
     plain = []
@@ -49,37 +60,79 @@ def decrypt_transposition(ciphertext):
     best_text = ""
     best_key_len = 0
     n = len(ciphertext)
+    
     for key_len in range(2, n):
         num_rows = (n + key_len - 1) // key_len
-        extra = n % key_len
-        col_lens = [num_rows if (i < extra or extra == 0) else num_rows - 1 for i in range(key_len)]
-        cols = {}
+        remainder = n % key_len
+        
+        col_lens = []
+        for i in range(key_len):
+            if remainder == 0 or i < remainder:
+                col_lens.append(num_rows)
+            else:
+                col_lens.append(num_rows - 1)
+                
+        cols = []
         curr = 0
-        for col_idx in range(key_len):
-            c_len = col_lens[col_idx]
-            cols[col_idx] = ciphertext[curr:curr + c_len]
+        for i in range(key_len):
+            c_len = col_lens[i]
+            cols.append(ciphertext[curr:curr + c_len])
             curr += c_len
+            
         plain_chars = []
         for r in range(num_rows):
             for c in range(key_len):
                 if r < len(cols[c]):
                     plain_chars.append(cols[c][r])
+                    
         candidate = "".join(plain_chars)
         score = english_score(candidate)
         if score > best_score:
             best_score = score
             best_text = candidate
             best_key_len = key_len
+            
     return best_key_len, best_text
+
+def run_experiment():
+    corpus = (
+        "THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG "
+        "CRYPTOGRAPHY IS THE PRACTICE AND STUDY OF TECHNIQUES FOR SECURE COMMUNICATION "
+        "IN THE PRESENCE OF ADVERSARIAL THIRD PARTIES MORE GENERALLY CRYPTOGRAPHY IS ABOUT "
+        "CONSTRUCTING AND ANALYZING PROTOCOLS THAT PREVENT THIRD PARTIES OR THE PUBLIC FROM "
+        "READING PRIVATE MESSAGES MODERN CRYPTOGRAPHY EXISTS AT THE INTERSECTION OF MATHEMATICS "
+        "COMPUTER SCIENCE ELECTRICAL ENGINEERING AND OTHER DISCIPLINE"
+    )
+    
+    lengths = [5, 10, 20, 50, 100]
+    num_trials = 30
+
+    print("=== Caesar Breaker Accuracy Experiment (30 Trials per Length) ===")
+    for l in lengths:
+        correct = 0
+        for _ in range(num_trials):
+            start = random.randint(0, len(corpus) - l)
+            original = corpus[start:start + l]
+            true_shift = random.randint(1, 25)
+            
+            ciphertext = encrypt_caesar(original, true_shift)
+            predicted_shift, _ = break_caesar(ciphertext)
+            
+            if predicted_shift == true_shift:
+                correct += 1
+                
+        acc = (correct / num_trials) * 100
+        print(f"Length {l:3d} chars: {acc:.1f}% accuracy ({correct}/{num_trials} correct)")
 
 if __name__ == "__main__":
     caesar_cipher = "ZNK ZKGS CUT ZNK SGZIN OT ZNK RGYZ SOTAZK GLZKX G RUTM GTJ JOLLOIARZ YKIUTJ NGRL YZAJKTZY CNU VXGIZOIK G ROZZRK KBKXE JGE AYAGRRE"
     transposition_cipher = "WHHN HN ETRINEMGOSNETRNCHTHHETTTI SSHELIVO LH DHBDKEHEE S HLTT E  GERTDEW EO E ENL OEDOOB UMHRNH RAT RCDWR IWU RLRYFNITYIEFMLOH H E TGETCEDI ITD  N IAK AAETAT"
 
+    print("=== Decryption Results for student10 ===")
     shift, caesar_plain = break_caesar(caesar_cipher)
-    print(f"Caesar Shift: {shift}")
-    print(f"Caesar Plaintext: {caesar_plain}\n")
+    print(f"Caesar Shift: {shift} | Plaintext: {caesar_plain}")
 
     key_len, trans_plain = decrypt_transposition(transposition_cipher)
-    print(f"Transposition Key Length: {key_len}")
-    print(f"Transposition Plaintext: {trans_plain}")
+    print(f"Transposition Key Length: {key_len} | Plaintext: {trans_plain}\n")
+
+    run_experiment()
