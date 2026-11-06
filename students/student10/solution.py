@@ -55,37 +55,45 @@ def break_caesar(ciphertext):
             best_shift = shift
     return best_shift, best_text
 
-def decrypt_transposition(ciphertext):
-    best_score = -1
+def decrypt_transposition(ciphertext, key_len):
+    n = len(ciphertext)
+    num_rows = n // key_len
+    remainder = n % key_len
+    
+    # חישוב אורכי העמודות: העמודות הראשונות מקבלות תו נוסף אם יש שארית
+    col_lens = []
+    for i in range(key_len):
+        if i < remainder:
+            col_lens.append(num_rows + 1)
+        else:
+            col_lens.append(num_rows)
+            
+    # חיתוך הטקסט המוצפן לעמודות לפי האורכים החיצוניים
+    cols = []
+    curr = 0
+    for c_len in col_lens:
+        cols.append(ciphertext[curr:curr + c_len])
+        curr += c_len
+        
+    # הרכבת הטקסט מחדש שורה אחר שורה (משמאל לימין)
+    plain_chars = []
+    max_rows = max(col_lens)
+    for r in range(max_rows):
+        for c in range(key_len):
+            if r < len(cols[c]):
+                plain_chars.append(cols[c][r])
+                
+    return "".join(plain_chars)
+
+def break_transposition(ciphertext):
+    best_score = -999999
     best_text = ""
     best_key_len = 0
     n = len(ciphertext)
     
-    for key_len in range(2, n):
-        num_rows = (n + key_len - 1) // key_len
-        remainder = n % key_len
-        
-        col_lens = []
-        for i in range(key_len):
-            if remainder == 0 or i < remainder:
-                col_lens.append(num_rows)
-            else:
-                col_lens.append(num_rows - 1)
-                
-        cols = []
-        curr = 0
-        for i in range(key_len):
-            c_len = col_lens[i]
-            cols.append(ciphertext[curr:curr + c_len])
-            curr += c_len
-            
-        plain_chars = []
-        for r in range(num_rows):
-            for c in range(key_len):
-                if r < len(cols[c]):
-                    plain_chars.append(cols[c][r])
-                    
-        candidate = "".join(plain_chars)
+    # בדיקת כל אורכי המפתח האפשריים (מספר עמודות)
+    for key_len in range(2, min(n, 20)):
+        candidate = decrypt_transposition(ciphertext, key_len)
         score = english_score(candidate)
         if score > best_score:
             best_score = score
@@ -132,7 +140,7 @@ if __name__ == "__main__":
     shift, caesar_plain = break_caesar(caesar_cipher)
     print(f"Caesar Shift: {shift} | Plaintext: {caesar_plain}")
 
-    key_len, trans_plain = decrypt_transposition(transposition_cipher)
-    print(f"Transposition Key Length: {key_len} | Plaintext: {trans_plain}\n")
+    key_len, trans_plain = break_transposition(transposition_cipher)
+    print(f"Transposition Key Length (Number of Columns): {key_len} | Plaintext: {trans_plain}\n")
 
     run_experiment()
