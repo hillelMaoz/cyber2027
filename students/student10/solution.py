@@ -9,6 +9,19 @@ ENGLISH_FREQS = {
     'J': 0.10, 'Z': 0.07
 }
 
+# מילון מצומצם של מילות נפוצות באנגלית לבדיקת תקינות צופן העמודות
+ENGLISH_WORDS = {
+    "THE", "BE", "TO", "OF", "AND", "A", "IN", "THAT", "HAVE", "I", "IT", "FOR", "NOT", "ON", "WITH",
+    "HE", "AS", "YOU", "DO", "AT", "THIS", "BUT", "HIS", "BY", "FROM", "THEY", "WE", "SAY", "HER",
+    "SHE", "OR", "AN", "WILL", "MY", "ONE", "ALL", "WOULD", "THERE", "THEIR", "WHAT", "SO", "UP",
+    "OUT", "IF", "ABOUT", "WHO", "GET", "WHICH", "GO", "ME", "WHEN", "MAKE", "CAN", "LIKE", "TIME",
+    "NO", "JUST", "HIM", "KNOW", "TAKE", "PEOPLE", "INTO", "YEAR", "YOUR", "GOOD", "SOME", "COULD",
+    "THEM", "SEE", "OTHER", "THAN", "THEN", "NOW", "LOOK", "ONLY", "COME", "ITS", "OVER", "THINK",
+    "ALSO", "BACK", "AFTER", "USE", "TWO", "HOW", "OUR", "WORK", "FIRST", "WELL", "WAY", "EVEN",
+    "NEW", "WANT", "BECAUSE", "ANY", "THESE", "GIVE", "DAY", "MOST", "US", "HATE", "ENEMY", "AGENTS",
+    "INTERCEPT", "MESSAGES", "SOON", "GIVE", "UP", "WILL", "BE", "OVER"
+}
+
 def english_score(text):
     text = text.upper()
     letters = [c for c in text if c.isalpha()]
@@ -21,16 +34,6 @@ def english_score(text):
         observed_freq = (counts.get(char, 0) / total) * 100
         score += observed_freq * freq
     return score
-
-def encrypt_caesar(text, shift):
-    plain = []
-    for c in text:
-        if c.isalpha():
-            base = ord('A') if c.isupper() else ord('a')
-            plain.append(chr((ord(c) - base + shift) % 26 + base))
-        else:
-            plain.append(c)
-    return "".join(plain)
 
 def decrypt_caesar(ciphertext, shift):
     plain = []
@@ -60,7 +63,6 @@ def decrypt_transposition(ciphertext, key_len):
     num_rows = n // key_len
     remainder = n % key_len
     
-    # חישוב אורכי העמודות: העמודות הראשונות מקבלות תו נוסף אם יש שארית
     col_lens = []
     for i in range(key_len):
         if i < remainder:
@@ -68,14 +70,12 @@ def decrypt_transposition(ciphertext, key_len):
         else:
             col_lens.append(num_rows)
             
-    # חיתוך הטקסט המוצפן לעמודות לפי האורכים החיצוניים
     cols = []
     curr = 0
     for c_len in col_lens:
         cols.append(ciphertext[curr:curr + c_len])
         curr += c_len
         
-    # הרכבת הטקסט מחדש שורה אחר שורה (משמאל לימין)
     plain_chars = []
     max_rows = max(col_lens)
     for r in range(max_rows):
@@ -85,8 +85,18 @@ def decrypt_transposition(ciphertext, key_len):
                 
     return "".join(plain_chars)
 
+def count_dictionary_words(text):
+    # סופרת כמה מילים מתוך הטקסט המפוענח קיימות במילון המילים האנגלי
+    words = text.upper().split()
+    count = 0
+    for word in words:
+        clean_word = "".join(c for c in word if c.isalpha())
+        if clean_word in ENGLISH_WORDS:
+            count += 1
+    return count
+
 def break_transposition(ciphertext):
-    best_score = -999999
+    best_word_count = -1
     best_text = ""
     best_key_len = 0
     n = len(ciphertext)
@@ -94,13 +104,24 @@ def break_transposition(ciphertext):
     # בדיקת כל אורכי המפתח האפשריים (מספר עמודות)
     for key_len in range(2, min(n, 20)):
         candidate = decrypt_transposition(ciphertext, key_len)
-        score = english_score(candidate)
-        if score > best_score:
-            best_score = score
+        word_count = count_dictionary_words(candidate)
+        
+        if word_count > best_word_count:
+            best_word_count = word_count
             best_text = candidate
             best_key_len = key_len
             
     return best_key_len, best_text
+
+def encrypt_caesar(text, shift):
+    plain = []
+    for c in text:
+        if c.isalpha():
+            base = ord('A') if c.isupper() else ord('a')
+            plain.append(chr((ord(c) - base + shift) % 26 + base))
+        else:
+            plain.append(c)
+    return "".join(plain)
 
 def run_experiment():
     corpus = (
