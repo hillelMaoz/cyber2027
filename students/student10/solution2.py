@@ -1,9 +1,6 @@
 """HW2 - student10: substitution cipher breaking and frequency analysis"""
 import random
 from collections import Counter
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 
 CIPHER = """CWB OIABDC AKMTBAD RIUMCBN CWB NBBA OAIX K DXKHH YHKMB OHJEMT HIL IZBA CWB CABBD CWB MBL GERJRHB YKCW RIMMBRCD CWB CAKEM DCKCEIM LECW CWB UMEZBADECJ RKXYUD CWB MBLDYKYBA YAEMCBN K RIAABRCEIM KOCBA ABKNBAD MICERBN KM BAAIA EM CWB LBKCWBA ABYIAC K DEMTHB RHIUN RKM LBETW XIAB CWKM K WUMNABN BHBYWKMCD JBC EC OHIKCD KGIZB UD CWB OBDCEZKH BMNBN LECW XUDER EM CWB DVUKAB KMN HETWCD WKMTEMT GBCLBBM CWB CABBD XIDC IO CWB LKCBA IM IUA YHKMBC ED DKHCJ KMN IMHJ K DXKHH YKAC RKM GB UDBN OIA NAEMFEMT CWB XUDBUX IYBMBN K MBL WKHH NBZICBN CI CWB WEDCIAJ IO RINBD XKRWEMBD KMN DBRABC XBDDKTBD HIMT KTI FEMTD DBMC XBDDBMTBAD IM WIADBGKRF KMN K ABYHJ RIUHN CKFB XKMJ LBBFD CI KAAEZB WIMBJ MBZBA DYIEHD GBRKUDB GBBD ABXIZB XIDC IO CWB LKCBA GBOIAB CWBJ DBKH CWB WIMBJRIXG CWB IHN XKY DWILBN AIKND CWKC MI HIMTBA BPEDCBN KMN ZEHHKTBD CWKC WKN GBBM KGKMNIMBN CWB NBCBRCEZB MICERBN CWKC CWB RHIRF EM CWB WKHHLKJ WKN DCIYYBN KC BPKRCHJ XENMETWC ZIHUMCBBAD RHBKMBN CWB GBKRW KMN RIHHBRCBN XIAB YHKDCER GICCHBD CWKM KMJIMB WKN BPYBRCBN BKAHJ RIXYUCBAD OEHHBN BMCEAB AIIXD KMN LBAB HBDD YILBAOUH CWKM K XINBAM RKHRUHKCIA GBOIAB CWB EMZBMCEIM IO RHIRFD YBIYHB XBKDUABN CEXB LECW DKMN LKCBA KMN DWKNILD NIRCIAD ABRIXXBMN NAEMFEMT LKCBA CWAIUTWIUC CWB NKJ BDYBREKHHJ NUAEMT WIC LBKCWBA XIUMCKEMD EM CWB MIACW KAB RIZBABN LECW DMIL OIA WKHO CWB JBKA KMN LECW OHILBAD OIA CWB ABDC LWBM CWB YILBA OKEHBN CWB LWIHB MBETWGIAWIIN TKCWBABN IUCDENB CI HIIF KC CWB DCKAD CWB IARWBDCAK CUMBN CWBEA EMDCAUXBMCD LWEHB CWB KUNEBMRB DHILHJ OIUMN CWBEA DBKCD DIXB GEAND RKM DBMDB CWB XKTMBCER OEBHN IO CWB BKACW KMN UDB EC CI OEMN CWBEA LKJ DIUCW YKYBA LKD IMRB DI BPYBMDEZB CWKC XIMFD DRAKYBN IHN YKTBD RHBKM EM IANBA CI LAECB IM CWBX KTKEM IUA MBETWGIA ABYKEAD IHN AKNEID KMN RKM CBHH LWKC ED LAIMT SUDC GJ HEDCBMEMT CWB RKDCHB LKHHD LBAB GUEHC DI CWERF CWKC RKMMIMD RIUHN GKABHJ NKXKTB CWBX DREBMCEDCD DCUNJEMT CWB NBBY IRBKM WKZB OIUMN KMEXKHD CWKC XKFB CWBEA ILM HETWC EM CICKH NKAFMBDD K DCAIMT LEMN YUDWBN CWB DKEHGIKC KRAIDD CWB HKFB OKDCBA CWKM KMJ IO UD WKN WIYBN"""
 ABC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -56,16 +53,13 @@ LENGTHS = [100, 250, 500, 1000, 2000]
 
 
 def run_experiment():
-    res, wrong_count = {}, Counter()
+    res = {}
     for n in LENGTHS:
         seg = CIPHER[:n]
         g = freq_break(seg)
         ok, present, cr = score(seg, g)
         res[n] = (len(ok), present, cr)
-        for c in set(ch for ch in seg if ch.isalpha()):
-            if c not in ok:
-                wrong_count[C2P[c]] += 1
-    return res, wrong_count
+    return res
 
 
 # ---------- Alice's idea: random letters inserted between words ----------
@@ -109,7 +103,7 @@ if __name__ == "__main__":
     print("\nDecrypted text (beginning):\n", PLAINTEXT[:400], "...\n")
     print("Text length (letters + spaces):", len(CIPHER))
 
-    res, wrong = run_experiment()
+    res = run_experiment()
     print("\nLength | correct letters / letters present | % correct characters")
     for n in LENGTHS:
         a, b, c = res[n]
@@ -118,25 +112,6 @@ if __name__ == "__main__":
     print("\nRank displacement (letter, text rank, English rank, diff, guess, correct?):")
     for row in rank_displacement():
         print("  ", row)
-
-    # Graph: the code is English-only, but the image labels are Hebrew.
-    # Hebrew strings are written as Unicode escapes so the source stays ASCII.
-    LABEL_CORRECT = "\u05d0\u05d5\u05ea\u05d9\u05d5\u05ea \u05e9\u05de\u05d5\u05e4\u05d5 \u05e0\u05db\u05d5\u05df"  # letters mapped correctly
-    LABEL_PRESENT = "\u05d0\u05d5\u05ea\u05d9\u05d5\u05ea \u05e9\u05d4\u05d5\u05e4\u05d9\u05e2\u05d5 \u05d1\u05e7\u05d8\u05e2"  # letters present in the segment
-    LABEL_X = "\u05d0\u05d5\u05e8\u05da \u05d4\u05d8\u05e7\u05e1\u05d8 \u05d4\u05de\u05d5\u05e6\u05e4\u05df (\u05ea\u05d5\u05d5\u05d9\u05dd)"  # ciphertext length (characters)
-    LABEL_Y = "\u05de\u05e1\u05e4\u05e8 \u05d0\u05d5\u05ea\u05d9\u05d5\u05ea"  # number of letters
-    LABEL_TITLE = "\u05e9\u05d5\u05d1\u05e8 \u05ea\u05d3\u05d9\u05e8\u05d5\u05d9\u05d5\u05ea: \u05d3\u05d9\u05d5\u05e7 \u05dc\u05e4\u05d9 \u05d0\u05d5\u05e8\u05da \u05d4\u05d8\u05e7\u05e1\u05d8"  # frequency breaker: accuracy by text length
-
-    fig, ax = plt.subplots(figsize=(7, 4.2))
-    ax.plot(LENGTHS, [res[n][0] for n in LENGTHS], "o-", label=LABEL_CORRECT)
-    ax.plot(LENGTHS, [res[n][1] for n in LENGTHS], "s--", label=LABEL_PRESENT)
-    ax.set_xlabel(LABEL_X)
-    ax.set_ylabel(LABEL_Y)
-    ax.set_title(LABEL_TITLE)
-    ax.grid(alpha=.3)
-    ax.legend()
-    fig.tight_layout()
-    fig.savefig("hw2_graph.png", dpi=150)
 
     avg, n_letters = alice_experiment()
     print(f"\nAlice: ~{n_letters} letters; average correctly mapped letters: {avg:.1f}/26")
